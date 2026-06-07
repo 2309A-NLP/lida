@@ -1,0 +1,51 @@
+# RAG智能问答系统配置
+# 使用DeepSeek API + Milvus Lite（本地文件）
+
+pdf:
+  file_path: "/mnt/d/RAG工单/RAG工单1/招股说明书1-无水印.pdf"
+
+chunking:
+  chunk_size: 300
+  chunk_overlap: 30
+  separators: ["\n\n", "\n", "。", "；", "，", " ", ""]
+
+embedding:
+  backend: "onnx"
+  model_name: "BAAI/bge-small-zh-v1.5"
+
+vectordb:
+  persist_directory: "/mnt/d/RAG工单/RAG工单1/vectordb/"
+  collection_name: "prospectus_rag"
+  hnsw_ef_construction: 100
+  hnsw_ef_search: 50
+  hnsw_M: 16
+
+llm:
+  provider: "deepseek"
+  model: "deepseek-chat"
+  api_key: "sk-171f528187724a14a74acc98e756c1c1"
+  base_url: "https://api.deepseek.com"
+  temperature: 0.1
+  max_tokens: 512
+  streaming: true
+
+retrieval:
+  top_k: 5
+  similarity_threshold: 0.30
+
+query_understanding:
+  enabled: true
+  intent_recognition: true
+  disambiguation: true
+  decomposition: true
+
+feedback:
+  enabled: true
+  storage_dir: "/mnt/d/RAG工单/RAG工单1/outputs"
+
+system:
+  max_response_time: 3
+  language: "zh"
+  cache_size: 200
+  parallel_analysis: true
+  embedding_cache_size: 500
