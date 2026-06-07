@@ -1,0 +1,64 @@
+# RAG智能问答系统 v2 - 配置文件
+# 路径基于 WSL Linux 文件系统映射
+
+pdf:
+  file_path: "/mnt/d/RAG工单/RAG工单2/招股说明书1-无水印.pdf"
+
+chunking:
+  chunk_size: 300
+  chunk_overlap: 30
+  separators: ["\n\n", "\n", "。", "；", "，", " ", ""]
+
+embedding:
+  backend: "onnx"
+  model_name: "BAAI/bge-small-zh-v1.5"
+  onnx_path: "/home/lida/.cache/fastembed/models--Qdrant--bge-small-zh-v1.5/snapshots/46fbe35fd4374a00fee7de77dfddaeb6dd6a2c59/model_optimized.onnx"
+  tokenizer_path: "/home/lida/.cache/fastembed/models--Qdrant--bge-small-zh-v1.5/snapshots/46fbe35fd4374a00fee7de77dfddaeb6dd6a2c59/tokenizer.json"
+  dimension: 512
+
+vectordb:
+  persist_directory: "/mnt/d/RAG工单/RAG工单2/vectordb/"
+  collection_name: "prospectus_rag_v2"
+  hnsw_ef_construction: 100
+  hnsw_ef_search: 50
+  hnsw_M: 16
+
+llm:
+  provider: "deepseek"
+  model: "deepseek-chat"
+  api_key: "sk-171f528187724a14a74acc98e756c1c1"
+  base_url: "https://api.deepseek.com"
+  temperature: 0.1
+  max_tokens: 1024
+  streaming: true
+
+retrieval:
+  top_k: 5
+  similarity_threshold: 0.25
+
+query_understanding:
+  enabled: true
+  intent_recognition: true
+  disambiguation: true
+  decomposition: true
+
+feedback:
+  enabled: true
+  storage_dir: "/mnt/d/RAG工单/RAG工单2/outputs"
+
+system:
+  max_response_time: 3
+  language: "zh"
+  cache_size: 200
+  persistent_cache: true
+  embedding_cache_size: 500
+  parallel_analysis: true
+
+evaluation:
+  enabled: true
+  precision_threshold: 0.30
+  use_llm_judge: true
+
+bilingual:
+  enabled: true
+  cross_retrieval: true
