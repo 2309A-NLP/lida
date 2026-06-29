@@ -1,0 +1,54 @@
+{
+  "config": {
+    "api_key": "***",
+    "pose_endpoint": "https://dashscope.aliyuncs.com/api/v1/services/aigc/image-generation/generation",
+    "endpoint": "https://dashscope.aliyuncs.com/api/v1/services/aigc/image2image/image-synthesis",
+    "task_endpoint_template": "https://dashscope.aliyuncs.com/api/v1/tasks/{task_id}",
+    "pose_model_id": "wan2.7-image-pro",
+    "pose_size": "2K",
+    "model_id": "wanx2.1-imageedit",
+    "width": 1024,
+    "height": 1024,
+    "poll_interval_seconds": 2.0,
+    "task_timeout_seconds": 180,
+    "request_timeout_seconds": 60,
+    "output_count": 1,
+    "expand_top_scale": 1.0,
+    "expand_bottom_scale": 1.6,
+    "expand_left_scale": 1.15,
+    "expand_right_scale": 1.15,
+    "negative_prompt": "low quality, blurry, distorted face, deformed eyes, extra eyes, extra nose, extra mouth, bad anatomy, duplicated features, warped face, oversmoothed skin, noisy background"
+  },
+  "device": "bailian-online",
+  "seed": 42,
+  "subject_hint": "natural portrait, consistent facial features, realistic lighting",
+  "tasks": {
+    "front": {
+      "task_id": "c4c7d114-6ac3-421f-824c-328657fba923",
+      "task_status": "SUCCEEDED",
+      "image_url": "https://dashscope-7c2c.oss-accelerate.aliyuncs.com/1d/57/20260624/7fdb9696/2d2e9630-2d1b-4a00-9339-b18de14ee700_0.png?Expires=1782373842&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=JCTwMf6iEkQ8Fae8WD2oiWQsjIQ%3D"
+    },
+    "left_turn": {
+      "task_id": "8715c201-7e3c-49b3-9bcf-a1465ad17339",
+      "task_status": "SUCCEEDED",
+      "image_url": "https://dashscope-7c2c.oss-accelerate.aliyuncs.com/1d/00/20260624/727717a8/76a86f7e-7a15-4e96-9a8e-3472f3247ab3_0.png?Expires=1782373879&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=bBDK%2B833zTU3ngfU8csqsbnU%2FDM%3D"
+    },
+    "right_turn": {
+      "task_id": "c137728a-de5e-437b-b815-48d4b991de0f",
+      "task_status": "SUCCEEDED",
+      "image_url": "https://dashscope-7c2c.oss-accelerate.aliyuncs.com/1d/6e/20260624/727717a8/094cff24-c6fc-474e-b51e-c9da949f756a_0.png?Expires=1782373913&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=ZsqXf6ihkn0wdImcuvjqNUIGNBc%3D"
+    },
+    "outpaint": {
+      "task_id": "c1f4dd7d-0110-433d-82b2-f018d5185ea9",
+      "task_status": "SUCCEEDED",
+      "image_url": "https://dashscope-result-wlcb-acdr-1.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/ba/20260624/901e463f/567328e1-c747-4c63-adaa-7de8c093688745.png?Expires=1782373954&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=nQGFu3jms4rskkegbe%2Bwasiv0Pc%3D"
+    }
+  },
+  "outputs": {
+    "preprocessed_path": "D:\\Agent工单\\Agent工单3\\outputs\\preprocessed.png",
+    "front_path": "D:\\Agent工单\\Agent工单3\\outputs\\front.png",
+    "left_turn_path": "D:\\Agent工单\\Agent工单3\\outputs\\left_turn.png",
+    "right_turn_path": "D:\\Agent工单\\Agent工单3\\outputs\\right_turn.png",
+    "outpaint_path": "D:\\Agent工单\\Agent工单3\\outputs\\outpaint.png"
+  }
+}

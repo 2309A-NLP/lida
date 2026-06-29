@@ -1,0 +1,105 @@
+# 智能体任务工单系统配置文件
+
+# 服务器配置
+server:
+  host: "0.0.0.0"
+  port: 8000
+  debug: true
+  reload: true
+
+# 数据库配置
+database:
+  type: "sqlite"  # sqlite 或 postgresql
+  sqlite:
+    path: "./data/workorders.db"
+  postgresql:
+    host: "localhost"
+    port: 5432
+    database: "workorder_system"
+    username: "postgres"
+    password: "your_password"
+
+# AI模型配置
+ai:
+  # OpenAI配置
+  openai:
+    api_key: "your-openai-api-key"
+    model: "gpt-4"
+    max_tokens: 2000
+    temperature: 0.7
+
+  # Anthropic配置
+  anthropic:
+    api_key: "your-anthropic-api-key"
+    model: "claude-3-sonnet-20240229"
+    max_tokens: 4000
+
+  # 默认使用的AI服务
+  default_provider: "anthropic"  # openai 或 anthropic
+
+# NLP配置
+nlp:
+  language: "zh"  # 中文
+  spacy_model: "zh_core_web_sm"
+  intent_confidence_threshold: 0.7
+  entity_recognition: true
+
+# Agent配置
+agent:
+  max_concurrent_tasks: 5
+  task_timeout: 300  # 秒
+  auto_assign: true
+  priority_levels:
+    - "低"
+    - "中"
+    - "高"
+    - "紧急"
+
+# 工单配置
+workorder:
+  statuses:
+    - "待处理"
+    - "处理中"
+    - "已完成"
+    - "已取消"
+    - "待审核"
+  categories:
+    - "技术支持"
+    - "业务咨询"
+    - "故障报修"
+    - "需求开发"
+    - "其他"
+  auto_close_days: 30  # 自动关闭已完成工单的天数
+
+# 数字人配置
+digital_human:
+  enabled: true
+  voice_enabled: false
+  avatar: "default"
+  greeting_message: "您好！我是智能客服助手，有什么可以帮助您的吗？"
+
+# 安全配置
+security:
+  secret_key: "your-secret-key-change-in-production"
+  algorithm: "HS256"
+  access_token_expire_minutes: 30
+
+# 日志配置
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  file: "./logs/system.log"
+  max_file_size: "10MB"
+  backup_count: 5
+
+# 通知配置
+notification:
+  enabled: true
+  email:
+    enabled: false
+    smtp_server: "smtp.gmail.com"
+    smtp_port: 587
+    username: "your-email@gmail.com"
+    password: "your-password"
+  webhook:
+    enabled: false
+    url: "https://your-webhook-url.com"

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>日程提醒智能体</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="hero">
+      <div class="hero__badge">🗓️ Agent 日程提醒</div>
+      <div class="hero__content">
+        <div class="hero__main">
+          <p class="hero__eyebrow">人工智能 NLP-Agent 数字人项目</p>
+          <h1>日程提醒智能体</h1>
+          <p class="hero__summary">
+            支持自然语言添加、查询、删除、修改日程，数据写入数据库，并在到点后自动生成提醒记录。
+          </p>
+          <div class="hero__actions">
+            <button class="hero-action hero-action--solid" type="button" data-question="添加日程：下午5点开会">添加日程</button>
+            <button class="hero-action" type="button" data-question="我今天的日程有哪些？">查看今日日程</button>
+            <button class="hero-action" type="button" data-question="删除日程 1">删除日程 1</button>
+            <button class="hero-action" type="button" data-question="修改日程 1 为 明天下午3点提交周报">修改日程 1</button>
+          </div>
+        </div>
+        <div class="hero__meta">
+          <div class="meta-card">
+            <span>服务状态</span>
+            <strong id="backend-status">检查中</strong>
+          </div>
+          <div class="meta-card">
+            <span>生效日程数</span>
+            <strong id="active-count">-</strong>
+          </div>
+          <div class="meta-card">
+            <span>提醒日志数</span>
+            <strong id="reminder-count">-</strong>
+          </div>
+          <div class="meta-card">
+            <span>当前日期</span>
+            <strong id="today-label">-</strong>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="workspace__main">
+        <section class="panel panel--chat">
+          <div class="panel__header panel__header--chat">
+            <div>
+              <h2>日程指令对话</h2>
+              <p>输入自然语言指令，智能体会自动识别并执行日程增删改查。</p>
+            </div>
+            <button id="clear-chat-btn" class="ghost-btn" type="button">清空对话</button>
+          </div>
+
+          <div id="chat-log" class="chat-log" aria-live="polite">
+            <article class="message" data-role="system">
+              <div class="message__role">系统提示</div>
+              <div class="message__bubble">您好，我是日程提醒智能体。您可以对我说：添加日程：下午5点开会；我今天的日程有哪些？；删除日程 1；修改日程 1 为 明天下午3点提交周报。</div>
+            </article>
+          </div>
+
+          <div class="quick-actions">
+            <button class="chip" type="button" data-question="添加日程：明天上午8点提醒我起床">添加：起床提醒</button>
+            <button class="chip" type="button" data-question="添加日程：每周一上午9点开周会">添加：每周周会</button>
+            <button class="chip" type="button" data-question="我今天的日程有哪些？">查询：今日日程</button>
+            <button class="chip" type="button" data-question="查看全部日程">查询：全部日程</button>
+            <button class="chip" type="button" data-question="删除日程 1">删除：日程 1</button>
+            <button class="chip" type="button" data-question="修改日程 1 为 后天下午4点客户回访">修改：日程 1</button>
+          </div>
+
+          <form id="chat-form" class="chat-form">
+            <label class="sr-only" for="chat-input">输入日程指令</label>
+            <textarea
+              id="chat-input"
+              rows="3"
+              placeholder="例如：添加日程：下午5点开会"
+            ></textarea>
+            <button id="submit-btn" type="submit" class="primary-btn">发送</button>
+          </form>
+        </section>
+
+        <section class="panel panel--guide">
+          <div class="panel__header">
+            <div>
+              <h2>测试语句</h2>
+              <p>对应工单里的核心验收场景。</p>
+            </div>
+          </div>
+          <ul class="guide-list">
+            <li><code>添加日程：下午5点开会</code></li>
+            <li><code>我今天的日程有哪些？</code></li>
+            <li><code>删除日程 1</code></li>
+            <li><code>修改日程 1 为 明天下午3点提交周报</code></li>
+            <li><code>添加日程：每周五下午6点提醒我写周报</code></li>
+          </ul>
+        </section>
+      </section>
+
+      <aside class="workspace__side">
+        <section class="panel panel--schedule">
+          <div class="panel__header">
+            <div>
+              <h2>已存日程表</h2>
+              <p>所有日程信息均写入数据库表，便于核验工单要求的存储准确性。</p>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>时间</th>
+                  <th>循环</th>
+                  <th>事项</th>
+                  <th>状态</th>
+                </tr>
+              </thead>
+              <tbody id="schedule-table-body"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel panel--reminders">
+          <div class="panel__header">
+            <div>
+              <h2>提醒记录</h2>
+              <p>到点后生成提醒日志，便于查看实际触发情况。</p>
+            </div>
+          </div>
+          <div id="reminder-feed" class="reminder-feed"></div>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <template id="message-template">
+    <article class="message">
+      <div class="message__role"></div>
+      <div class="message__bubble"></div>
+    </article>
+  </template>
+
+  <script src="./app.js"></script>
+</body>
+</html>

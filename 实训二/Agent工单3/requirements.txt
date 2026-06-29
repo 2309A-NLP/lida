@@ -1,0 +1,5 @@
+gradio>=5.5.0
+opencv-python>=4.10.0.84
+Pillow>=10.4.0
+numpy>=1.26.0,<2.0.0
+requests>=2.32.3

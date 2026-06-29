@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能体任务工单系统 V1.1</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .module-tabs {
+            display: flex;
+            gap: 8px;
+            padding: 15px 30px;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            flex-wrap: wrap;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .module-tab {
+            padding: 10px 20px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: 500;
+            background: #f9fafb;
+            color: #555;
+            transition: all 0.2s;
+        }
+        .module-tab:hover { border-color: #667eea; color: #667eea; }
+        .module-tab.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-color: transparent;
+        }
+        .module-panel { display: none; }
+        .module-panel.active { display: block; }
+        .module-panel.active.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+        /* 记账本 */
+        .money-records { max-height: 400px; overflow-y: auto; }
+        .money-item { padding: 10px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; font-size: 0.9em; }
+        .money-income { color: #10b981; }
+        .money-expense { color: #ef4444; }
+        .money-stat-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 15px; }
+
+        /* 日程 */
+        .schedule-item { padding: 12px; background: #f9fafb; border-radius: 8px; margin-bottom: 8px; border-left: 3px solid #667eea; }
+        .schedule-item .time { font-weight: bold; color: #667eea; }
+        .schedule-item .content { color: #333; margin-top: 3px; }
+        .schedule-item .repeat { font-size: 0.8em; color: #999; }
+        .reminder-item { padding: 8px 12px; background: #fffbeb; border-radius: 6px; margin-bottom: 6px; font-size: 0.9em; border-left: 3px solid #f59e0b; }
+
+        /* 基金/招股书 */
+        .qa-result { padding: 15px; background: #f9fafb; border-radius: 8px; margin-top: 15px; line-height: 1.7; }
+        .qa-result pre { white-space: pre-wrap; font-family: inherit; }
+        .schema-table { width: 100%; font-size: 0.85em; border-collapse: collapse; margin-top: 10px; }
+        .schema-table th { background: #667eea; color: white; padding: 6px 10px; text-align: left; }
+        .schema-table td { padding: 6px 10px; border-bottom: 1px solid #f0f0f0; }
+        .schema-table tr:hover { background: #f9fafb; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.8em; }
+        .badge-green { background: #d1fae5; color: #065f46; }
+        .badge-gray { background: #f3f4f6; color: #6b7280; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <header class="header">
+            <h1>🤖 智能体任务工单系统</h1>
+            <p class="subtitle">AI NLP-Agent数字人项目 - 智能任务工单管理系统 V1.1</p>
+        </header>
+
+        <!-- 模块切换标签 -->
+        <div class="module-tabs">
+            <button class="module-tab active" onclick="switchModule('workorder')">📋 工单管理</button>
+            <button class="module-tab" onclick="switchModule('money')">💰 记账本Agent</button>
+            <button class="module-tab" onclick="switchModule('schedule')">📅 日程提醒Agent</button>
+            <button class="module-tab" onclick="switchModule('fund')">📊 基金数据问答</button>
+            <button class="module-tab" onclick="switchModule('prospectus')">📄 招股书问答</button>
+        </div>
+
+        <!-- 工单管理模块 -->
+        <div id="panel-workorder" class="module-panel active two-col">
+            <!-- 左侧：数字人对话界面 -->
+            <div class="chat-section">
+                <div class="section-header">
+                    <h2>💬 智能助手</h2>
+                    <span class="status-indicator">在线</span>
+                </div>
+                <div class="digital-human">
+                    <div class="avatar"><div class="avatar-circle">🤖</div></div>
+                    <p class="greeting">您好！我是AI智能助手，有什么可以帮助您的吗？</p>
+                </div>
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message bot-message">
+                        <div class="message-content">
+                            <strong>AI助手：</strong>
+                            <p>欢迎使用智能工单系统！您可以直接描述您遇到的问题，我会帮您创建工单并分配给相应团队处理。</p>
+                        </div>
+                        <div class="message-time"></div>
+                    </div>
+                </div>
+                <div class="chat-input">
+                    <textarea id="chatInput" placeholder="请描述您的问题或需求..." rows="3"></textarea>
+                    <button onclick="sendMessage()" class="btn btn-primary">发送</button>
+                </div>
+            </div>
+
+            <!-- 右侧：工单列表 -->
+            <div class="workorder-section">
+                <div class="section-header">
+                    <h2>📋 工单列表</h2>
+                    <button onclick="refreshWorkOrders()" class="btn btn-small">刷新</button>
+                </div>
+                <div class="stats-cards" id="statsCards">
+                    <div class="stat-card"><div class="stat-value" id="totalOrders">0</div><div class="stat-label">总工单</div></div>
+                    <div class="stat-card"><div class="stat-value" id="pendingOrders">0</div><div class="stat-label">待处理</div></div>
+                    <div class="stat-card"><div class="stat-value" id="processingOrders">0</div><div class="stat-label">处理中</div></div>
+                    <div class="stat-card"><div class="stat-value" id="completedOrders">0</div><div class="stat-label">已完成</div></div>
+                </div>
+                <div class="filters">
+                    <input type="text" id="searchInput" placeholder="搜索工单编号/标题/描述..." onkeyup="handleSearchKeyup(event)">
+                    <select id="statusFilter" onchange="filterWorkOrders()">
+                        <option value="">全部状态</option>
+                        <option value="待处理">待处理</option>
+                        <option value="处理中">处理中</option>
+                        <option value="已完成">已完成</option>
+                        <option value="已取消">已取消</option>
+                        <option value="待审核">待审核</option>
+                    </select>
+                    <select id="categoryFilter" onchange="filterWorkOrders()">
+                        <option value="">全部类别</option>
+                        <option value="技术支持">技术支持</option>
+                        <option value="业务咨询">业务咨询</option>
+                        <option value="故障报修">故障报修</option>
+                        <option value="需求开发">需求开发</option>
+                        <option value="其他">其他</option>
+                    </select>
+                    <button onclick="exportWorkOrders()" class="btn btn-small" style="background:#10b981;color:white;white-space:nowrap;">导出CSV</button>
+                </div>
+                <div class="workorder-list" id="workorderList">
+                    <div class="empty-state"><p>暂无工单</p><p class="hint">与智能助手对话即可创建工单</p></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 记账本Agent模块 -->
+        <div id="panel-money" class="module-panel two-col">
+            <div class="chat-section">
+                <div class="section-header">
+                    <h2>💰 记账本助手</h2>
+                    <span class="status-indicator">在线</span>
+                </div>
+                <div class="digital-human">
+                    <div class="avatar"><div class="avatar-circle" style="font-size:2em;">💰</div></div>
+                    <p class="greeting">您好！我是家庭记账本助手，帮您记录收支、查询统计！</p>
+                </div>
+                <div class="chat-messages" id="moneyMessages">
+                    <div class="message bot-message">
+                        <div class="message-content">
+                            <strong>记账助手：</strong>
+                            <p>欢迎使用家庭记账本！请按格式输入：<br>• 今天女儿买了登山鞋499元<br>• 7月5日妈妈收到报销1000元<br>• 查询本月消费明细</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="chat-input">
+                    <textarea id="moneyInput" placeholder="输入记账信息，如：今天妈妈买菜花了50元" rows="3"></textarea>
+                    <button onclick="sendMoneyMessage()" class="btn btn-primary">发送</button>
+                </div>
+            </div>
+            <div class="workorder-section">
+                <div class="section-header">
+                    <h2>📊 账目统计</h2>
+                    <button onclick="loadMoneyData()" class="btn btn-small">刷新</button>
+                </div>
+                <div class="money-stat-row" id="moneySummary">
+                    <div class="stat-card"><div class="stat-value money-income" id="moneyIncome">0</div><div class="stat-label">本月收入</div></div>
+                    <div class="stat-card"><div class="stat-value money-expense" id="moneyExpense">0</div><div class="stat-label">本月支出</div></div>
+                    <div class="stat-card"><div class="stat-value" id="moneyNet">0</div><div class="stat-label">净收入</div></div>
+                </div>
+                <h3 style="margin-bottom:10px;color:#333;">最近记录</h3>
+                <div class="money-records" id="moneyRecords">
+                    <div class="empty-state"><p>暂无记录</p></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 日程提醒Agent模块 -->
+        <div id="panel-schedule" class="module-panel two-col">
+            <div class="chat-section">
+                <div class="section-header">
+                    <h2>📅 日程助手</h2>
+                    <span class="status-indicator" id="scheduleStatus">在线</span>
+                </div>
+                <div class="digital-human">
+                    <div class="avatar"><div class="avatar-circle" style="font-size:2em;">📅</div></div>
+                    <p class="greeting">您好！我是日程提醒助手，帮您管理日程安排！</p>
+                </div>
+                <div class="chat-messages" id="scheduleMessages">
+                    <div class="message bot-message">
+                        <div class="message-content">
+                            <strong>日程助手：</strong>
+                            <p>欢迎使用日程提醒助手！您可以：<br>• 提醒我明天下午3点开会<br>• 我今天的日程有哪些？<br>• 删除日程 1<br>• 修改日程 1 为 明天下午5点提交报告</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="chat-input">
+                    <textarea id="scheduleInput" placeholder="输入日程指令，如：提醒我明天下午3点开会" rows="3"></textarea>
+                    <button onclick="sendScheduleMessage()" class="btn btn-primary">发送</button>
+                </div>
+            </div>
+            <div class="workorder-section">
+                <div class="section-header">
+                    <h2>📋 日程列表</h2>
+                    <button onclick="loadScheduleData()" class="btn btn-small">刷新</button>
+                </div>
+                <div class="money-stat-row">
+                    <div class="stat-card"><div class="stat-value" id="activeSchedules">0</div><div class="stat-label">有效日程</div></div>
+                    <div class="stat-card"><div class="stat-value" id="reminderLogs">0</div><div class="stat-label">提醒日志</div></div>
+                    <div class="stat-card"><div class="stat-value" style="font-size:1em;" id="todayDate">-</div><div class="stat-label">今日</div></div>
+                </div>
+                <h3 style="margin-bottom:10px;color:#333;">今日日程</h3>
+                <div id="todaySchedules" style="margin-bottom:20px;">
+                    <div class="empty-state"><p>今日无日程</p></div>
+                </div>
+                <h3 style="margin-bottom:10px;color:#333;">全部日程</h3>
+                <div id="allSchedules" style="max-height:250px;overflow-y:auto;">
+                    <div class="empty-state"><p>暂无日程</p></div>
+                </div>
+                <h3 style="margin-bottom:10px;margin-top:15px;color:#333;">最近提醒</h3>
+                <div id="recentReminders" style="max-height:150px;overflow-y:auto;">
+                    <div class="empty-state"><p>暂无提醒记录</p></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 基金数据问答模块 -->
+        <div id="panel-fund" class="module-panel two-col">
+            <div class="chat-section">
+                <div class="section-header">
+                    <h2>📊 基金数据助手</h2>
+                    <span class="status-indicator">在线</span>
+                </div>
+                <div class="digital-human">
+                    <div class="avatar"><div class="avatar-circle" style="font-size:2em;">📊</div></div>
+                    <p class="greeting">您好！我是基金数据问答助手，支持查询基金/股票/债券相关数据！</p>
+                </div>
+                <div class="chat-messages" id="fundMessages">
+                    <div class="message bot-message">
+                        <div class="message-content">
+                            <strong>基金助手：</strong>
+                            <p>欢迎使用基金数据问答系统！您可以查询：<br>• 基金基本信息<br>• 股票持仓明细<br>• 债券持仓明细<br>• 基金日行情数据<br>• 基金数据库有哪些表</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="chat-input">
+                    <textarea id="fundInput" placeholder="输入查询问题，如：基金数据库有哪些表" rows="3"></textarea>
+                    <button onclick="sendFundQuestion()" class="btn btn-primary">查询</button>
+                </div>
+            </div>
+            <div class="workorder-section">
+                <div class="section-header">
+                    <h2>🗄️ 数据库结构</h2>
+                    <button onclick="loadFundSchema()" class="btn btn-small">加载结构</button>
+                </div>
+                <div id="fundSchemaInfo">
+                    <div class="empty-state"><p>点击「加载结构」查看数据库表信息</p></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 招股书问答模块 -->
+        <div id="panel-prospectus" class="module-panel two-col">
+            <div class="chat-section">
+                <div class="section-header">
+                    <h2>📄 招股书助手</h2>
+                    <span class="status-indicator">在线</span>
+                </div>
+                <div class="digital-human">
+                    <div class="avatar"><div class="avatar-circle" style="font-size:2em;">📄</div></div>
+                    <p class="greeting">您好！我是招股书问答助手，基于RAG技术回答招股书相关问题！</p>
+                </div>
+                <div class="chat-messages" id="prospectusMessages">
+                    <div class="message bot-message">
+                        <div class="message-content">
+                            <strong>招股书助手：</strong>
+                            <p>欢迎使用招股书问答系统！您可以查询：<br>• 公司主营业务是什么<br>• 募集资金用途<br>• 公司风险因素<br>• 公司财务数据<br>• 公司基本信息</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="chat-input">
+                    <textarea id="prospectusInput" placeholder="输入查询问题，如：公司主营业务是什么" rows="3"></textarea>
+                    <button onclick="sendProspectusQuestion()" class="btn btn-primary">查询</button>
+                </div>
+            </div>
+            <div class="workorder-section">
+                <div class="section-header">
+                    <h2>📚 知识库状态</h2>
+                    <button onclick="loadProspectusStats()" class="btn btn-small">检查状态</button>
+                </div>
+                <div id="prospectusStatsInfo">
+                    <div class="empty-state"><p>点击「检查状态」查看知识库信息</p></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 工单详情模态框 -->
+    <div id="workorderModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <div id="workorderDetail"></div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js?v=8091"></script>
+    <script src="/static/js/modules.js?v=8091"></script>
+</body>
+</html>

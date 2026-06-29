@@ -1,0 +1,521 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>招股书问答助手</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #1f1f1f;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: 85vh;
+      max-height: 800px;
+    }
+
+    /* 顶部 */
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 24px 28px;
+      color: #fff;
+    }
+
+    .header h1 {
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .header .subtitle {
+      font-size: 14px;
+      opacity: 0.9;
+      font-weight: 400;
+    }
+
+    /* 聊天区域 */
+    .chat-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px;
+      background: #fafafa;
+    }
+
+    .chat-area::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .chat-area::-webkit-scrollbar-thumb {
+      background: #d0d0d0;
+      border-radius: 3px;
+    }
+
+    /* 欢迎屏幕 */
+    .welcome {
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    .welcome-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .welcome h2 {
+      font-size: 24px;
+      font-weight: 600;
+      color: #1f1f1f;
+      margin-bottom: 8px;
+    }
+
+    .welcome p {
+      font-size: 15px;
+      color: #6e6e73;
+      margin-bottom: 32px;
+      line-height: 1.6;
+    }
+
+    .examples {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .example-chip {
+      background: #fff;
+      border: 1.5px solid #e5e5e5;
+      border-radius: 12px;
+      padding: 14px 16px;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      font-size: 14px;
+      color: #1f1f1f;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .example-chip::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+      opacity: 0;
+      transition: opacity 0.25s;
+    }
+
+    .example-chip:hover {
+      border-color: #667eea;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+    }
+
+    .example-chip:hover::before {
+      opacity: 1;
+    }
+
+    .example-chip span {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* 消息 */
+    .messages {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .message {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .message.user {
+      flex-direction: row-reverse;
+    }
+
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .message.user .avatar {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .message.assistant .avatar {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    .bubble {
+      max-width: 580px;
+      padding: 14px 18px;
+      border-radius: 16px;
+      line-height: 1.6;
+      font-size: 15px;
+      word-wrap: break-word;
+    }
+
+    .message.user .bubble {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      border-bottom-right-radius: 4px;
+      box-shadow: 0 2px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .message.assistant .bubble {
+      background: #fff;
+      color: #1f1f1f;
+      border-bottom-left-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .meta-info {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #8e8e93;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding-left: 48px;
+    }
+
+    .message.user .meta-info {
+      justify-content: flex-end;
+      padding-left: 0;
+      padding-right: 48px;
+    }
+
+    .meta-tag {
+      background: rgba(0, 0, 0, 0.05);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+    }
+
+    .loading-dots {
+      display: inline-flex;
+      gap: 4px;
+      align-items: center;
+      padding: 4px 0;
+    }
+
+    .loading-dots span {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #667eea;
+      animation: bounce 1.4s infinite ease-in-out both;
+    }
+
+    .loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+    .loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+      40% { transform: scale(1); opacity: 1; }
+    }
+
+    /* 输入区域 */
+    .input-area {
+      background: #fff;
+      padding: 20px 28px 24px;
+      border-top: 1px solid #e5e5e5;
+    }
+
+    .input-wrapper {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+      background: #f5f5f7;
+      border-radius: 16px;
+      padding: 12px 16px;
+      transition: all 0.2s;
+    }
+
+    .input-wrapper:focus-within {
+      background: #fff;
+      box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.3);
+    }
+
+    textarea {
+      flex: 1;
+      border: none;
+      background: transparent;
+      font-size: 15px;
+      font-family: inherit;
+      resize: none;
+      max-height: 120px;
+      line-height: 1.5;
+      outline: none;
+      color: #1f1f1f;
+    }
+
+    textarea::placeholder {
+      color: #afafaf;
+    }
+
+    .send-btn {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 18px;
+    }
+
+    .send-btn:hover:not(:disabled) {
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .send-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: scale(1);
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        height: 100vh;
+        max-height: none;
+        border-radius: 0;
+      }
+
+      .examples {
+        grid-template-columns: 1fr;
+      }
+
+      .bubble {
+        max-width: 75vw;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>招股书问答助手</h1>
+      <div class="subtitle">Claude Sonnet 4.6 · 80份招股书知识库</div>
+    </div>
+
+    <div class="chat-area" id="chatArea">
+      <div class="welcome" id="welcome">
+        <div class="welcome-icon">💼</div>
+        <h2>你好，我可以帮你什么？</h2>
+        <p>基于80份招股说明书，我可以回答关于公司信息、经营模式、募投项目等问题</p>
+
+        <div class="examples">
+          <div class="example-chip" data-q="湖南长远锂科股份有限公司变更设立时作为发起人的法人有哪些？">
+            <span>查询公司发起人</span>
+          </div>
+          <div class="example-chip" data-q="云南沃森生物技术股份有限公司负责产品研发的是什么部门？">
+            <span>组织架构查询</span>
+          </div>
+          <div class="example-chip" data-q="中国铁路通信信号股份有限公司的主要经营模式是怎样的？">
+            <span>经营模式分析</span>
+          </div>
+          <div class="example-chip" data-q="广州中海达卫星导航技术股份有限公司本次募集资金主要投资哪些项目？">
+            <span>募投项目查询</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="messages" id="messages" style="display: none;"></div>
+    </div>
+
+    <div class="input-area">
+      <div class="input-wrapper">
+        <textarea id="input" placeholder="输入你的问题..." rows="1"></textarea>
+        <button class="send-btn" id="sendBtn">
+          <span>➤</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const chatArea = document.getElementById('chatArea');
+    const welcome = document.getElementById('welcome');
+    const messages = document.getElementById('messages');
+    const input = document.getElementById('input');
+    const sendBtn = document.getElementById('sendBtn');
+
+    // 自动调整textarea高度
+    input.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+
+    // 示例问题
+    document.querySelectorAll('.example-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        input.value = chip.dataset.q;
+        sendMessage();
+      });
+    });
+
+    // 发送按钮
+    sendBtn.addEventListener('click', sendMessage);
+
+    // 回车发送
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    async function sendMessage() {
+      const question = input.value.trim();
+      if (!question) return;
+
+      // 切换到消息视图
+      if (welcome.style.display !== 'none') {
+        welcome.style.display = 'none';
+        messages.style.display = 'flex';
+      }
+
+      // 添加用户消息
+      addMessage('user', question);
+
+      // 清空输入
+      input.value = '';
+      input.style.height = 'auto';
+
+      // 禁用发送
+      sendBtn.disabled = true;
+
+      // 添加加载消息
+      const loadingId = addLoadingMessage();
+
+      try {
+        const response = await fetch('/answer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question })
+        });
+
+        const data = await response.json();
+
+        // 移除加载消息
+        document.getElementById(loadingId)?.remove();
+
+        // 构建元信息
+        const metaTags = [];
+        if (data.route) {
+          const routeName = data.route === 'prospectus_rag' ? '招股书' : '不支持';
+          metaTags.push(`<span class="meta-tag">${routeName}</span>`);
+        }
+        if (data.confidence !== undefined) {
+          metaTags.push(`<span class="meta-tag">置信度 ${(data.confidence * 100).toFixed(0)}%</span>`);
+        }
+        if (data.elapsed_ms) {
+          metaTags.push(`<span class="meta-tag">${data.elapsed_ms}ms</span>`);
+        }
+        if (data.evidence?.length > 0) {
+          metaTags.push(`<span class="meta-tag">${data.evidence.length}条证据</span>`);
+        }
+
+        // 添加AI回复
+        addMessage('assistant', data.answer || '抱歉，无法回答该问题', metaTags.join(''));
+
+      } catch (error) {
+        document.getElementById(loadingId)?.remove();
+        addMessage('assistant', '抱歉，服务器出现错误，请稍后重试');
+      }
+
+      // 恢复发送按钮
+      sendBtn.disabled = false;
+    }
+
+    function addMessage(role, content, meta = '') {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = `message ${role}`;
+
+      const avatarText = role === 'user' ? '你' : 'AI';
+      const metaHtml = meta ? `<div class="meta-info">${meta}</div>` : '';
+
+      msgDiv.innerHTML = `
+        <div class="avatar">${avatarText}</div>
+        <div>
+          <div class="bubble">${content}</div>
+          ${metaHtml}
+        </div>
+      `;
+
+      messages.appendChild(msgDiv);
+      msgDiv.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
+
+    function addLoadingMessage() {
+      const id = 'loading-' + Date.now();
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'message assistant';
+      msgDiv.id = id;
+
+      msgDiv.innerHTML = `
+        <div class="avatar">AI</div>
+        <div class="bubble">
+          <div class="loading-dots">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+      `;
+
+      messages.appendChild(msgDiv);
+      msgDiv.scrollIntoView({ behavior: 'smooth', block: 'end' });
+
+      return id;
+    }
+  </script>
+</body>
+</html>

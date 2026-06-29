@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>家庭记账本 - Terminal</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'JetBrains Mono', 'Consolas', 'Monaco', monospace;
+            background: #0a0e14;
+            color: #e6e1dc;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .terminal {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* 左侧面板 */
+        .sidebar {
+            width: 280px;
+            background: #0d1117;
+            border-right: 1px solid #1e2833;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #1e2833;
+            background: linear-gradient(180deg, #161b22 0%, #0d1117 100%);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #58a6ff 0%, #1f6feb 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 4px 12px rgba(31, 111, 235, 0.3);
+        }
+
+        .logo-text {
+            font-size: 16px;
+            font-weight: 600;
+            color: #f0f6fc;
+        }
+
+        .logo-sub {
+            font-size: 11px;
+            color: #8b949e;
+        }
+
+        /* 统计卡片 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            padding: 16px 20px;
+        }
+
+        .stat-card {
+            background: #161b22;
+            border: 1px solid #1e2833;
+            border-radius: 8px;
+            padding: 14px;
+            transition: all 0.2s;
+        }
+
+        .stat-card:hover {
+            border-color: #388bfd;
+            background: #1c2333;
+        }
+
+        .stat-card.income { border-left: 3px solid #3fb950; }
+        .stat-card.expense { border-left: 3px solid #f85149; }
+        .stat-card.balance { border-left: 3px solid #58a6ff; }
+
+        .stat-label {
+            font-size: 11px;
+            color: #8b949e;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .stat-value.income { color: #3fb950; }
+        .stat-value.expense { color: #f85149; }
+        .stat-value.balance { color: #58a6ff; }
+
+        /* 成员选择 */
+        .member-section {
+            padding: 16px 20px;
+            border-bottom: 1px solid #1e2833;
+        }
+
+        .member-title {
+            font-size: 11px;
+            color: #8b949e;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+
+        .member-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .member-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-size: 13px;
+            color: #c9d1d9;
+            border: none;
+            background: transparent;
+            width: 100%;
+            text-align: left;
+            font-family: inherit;
+        }
+
+        .member-item:hover {
+            background: #161b22;
+            color: #f0f6fc;
+        }
+
+        .member-item.active {
+            background: #1f6feb22;
+            color: #58a6ff;
+            border-left: 2px solid #58a6ff;
+        }
+
+        .member-icon {
+            width: 28px;
+            height: 28px;
+            background: #21262d;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .member-count {
+            margin-left: auto;
+            font-size: 11px;
+            color: #8b949e;
+            background: #21262d;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        /* 记录列表 */
+        .records-section {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 20px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .section-title {
+            font-size: 12px;
+            color: #8b949e;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .record-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: #161b22;
+            border: 1px solid #1e2833;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .record-item:hover {
+            border-color: #388bfd;
+            transform: translateX(4px);
+        }
+
+        .record-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            background: #21262d;
+        }
+
+        .record-info {
+            flex: 1;
+        }
+
+        .record-title {
+            font-size: 13px;
+            font-weight: 500;
+            color: #f0f6fc;
+            margin-bottom: 2px;
+        }
+
+        .record-desc {
+            font-size: 11px;
+            color: #8b949e;
+        }
+
+        .record-amount {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .record-amount.expense { color: #f85149; }
+        .record-amount.income { color: #3fb950; }
+
+        /* 右侧主区域 */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #0a0e14;
+        }
+
+        /* 顶部栏 */
+        .topbar {
+            height: 48px;
+            background: #0d1117;
+            border-bottom: 1px solid #1e2833;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            gap: 16px;
+        }
+
+        .tab {
+            padding: 8px 16px;
+            font-size: 13px;
+            color: #8b949e;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab:hover { color: #c9d1d9; }
+        .tab.active { color: #f0f6fc; border-bottom-color: #f78166; }
+
+        .topbar-actions {
+            margin-left: auto;
+            display: flex;
+            gap: 8px;
+        }
+
+        .topbar-btn {
+            padding: 6px 12px;
+            font-size: 12px;
+            background: #21262d;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            color: #c9d1d9;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .topbar-btn:hover {
+            background: #30363d;
+            border-color: #8b949e;
+        }
+
+        .topbar-btn.primary {
+            background: #238636;
+            border-color: #2ea043;
+            color: #fff;
+        }
+
+        .topbar-btn.primary:hover {
+            background: #2ea043;
+        }
+
+        .topbar-btn.danger {
+            background: #da3633;
+            border-color: #f85149;
+            color: #fff;
+        }
+
+        .topbar-btn.danger:hover {
+            background: #f85149;
+        }
+
+        /* 终端区域 */
+        .terminal-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .terminal-window {
+            flex: 1;
+            background: #0d1117;
+            border: 1px solid #1e2833;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .terminal-header {
+            height: 36px;
+            background: #161b22;
+            border-bottom: 1px solid #1e2833;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            gap: 8px;
+        }
+
+        .terminal-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .terminal-dot.red { background: #f85149; }
+        .terminal-dot.yellow { background: #d29922; }
+        .terminal-dot.green { background: #3fb950; }
+
+        .terminal-title {
+            margin-left: 12px;
+            font-size: 12px;
+            color: #8b949e;
+        }
+
+        .terminal-body {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .terminal-line {
+            margin-bottom: 4px;
+        }
+
+        .terminal-prompt { color: #3fb950; }
+        .terminal-command { color: #f0f6fc; }
+        .terminal-output { color: #8b949e; }
+        .terminal-success { color: #3fb950; }
+        .terminal-error { color: #f85149; }
+        .terminal-info { color: #58a6ff; }
+        .terminal-system { color: #d2a8ff; font-weight: 500; }
+        .terminal-warning { color: #d29922; }
+
+        .terminal-divider {
+            border-top: 1px dashed #21262d;
+            margin: 8px 0;
+        }
+
+        /* 输入区域 */
+        .input-area {
+            height: 48px;
+            background: #161b22;
+            border-top: 1px solid #1e2833;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            gap: 12px;
+        }
+
+        .input-prompt {
+            color: #3fb950;
+            font-weight: 600;
+        }
+
+        .input-field {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #f0f6fc;
+            font-family: inherit;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .input-field::placeholder { color: #484f58; }
+
+        .input-submit {
+            padding: 6px 16px;
+            background: #238636;
+            border: 1px solid #2ea043;
+            border-radius: 6px;
+            color: #fff;
+            font-family: inherit;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .input-submit:hover { background: #2ea043; }
+
+        /* 图表区域 */
+        .chart-container {
+            height: 180px;
+            padding: 16px;
+            background: #161b22;
+            border: 1px solid #1e2833;
+            border-radius: 8px;
+            margin-top: 16px;
+            flex-shrink: 0;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .chart-title {
+            font-size: 13px;
+            color: #f0f6fc;
+            font-weight: 600;
+        }
+
+        .chart-legend {
+            display: flex;
+            gap: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: #8b949e;
+        }
+
+        .legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 2px;
+        }
+
+        /* 弹窗 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.show { display: flex; }
+
+        .modal {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 24px;
+            min-width: 400px;
+            max-width: 500px;
+        }
+
+        .modal-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #f0f6fc;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #21262d;
+        }
+
+        .modal-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 13px;
+        }
+
+        .modal-label { color: #8b949e; }
+        .modal-value { color: #f0f6fc; }
+
+        .modal-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 20px;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            border: 1px solid #30363d;
+            background: #21262d;
+            color: #c9d1d9;
+        }
+
+        .modal-btn:hover { background: #30363d; }
+
+        .modal-btn.danger {
+            background: #da3633;
+            border-color: #f85149;
+            color: #fff;
+        }
+
+        .modal-btn.danger:hover { background: #f85149; }
+
+        .modal-btn.primary {
+            background: #238636;
+            border-color: #2ea043;
+            color: #fff;
+        }
+
+        /* 滚动条 */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0d1117; }
+        ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #484f58; }
+    </style>
+</head>
+<body>
+    <div class="terminal">
+        <!-- 左侧面板 -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon">💰</div>
+                    <div>
+                        <div class="logo-text">家庭记账本</div>
+                        <div class="logo-sub">Terminal v1.0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 统计卡片 -->
+            <div class="stats-grid">
+                <div class="stat-card income">
+                    <div class="stat-label">收入</div>
+                    <div class="stat-value income" id="income">¥0</div>
+                </div>
+                <div class="stat-card expense">
+                    <div class="stat-label">支出</div>
+                    <div class="stat-value expense" id="expense">¥0</div>
+                </div>
+                <div class="stat-card balance" style="grid-column: span 2;">
+                    <div class="stat-label">结余</div>
+                    <div class="stat-value balance" id="balance">¥0.00</div>
+                </div>
+            </div>
+
+            <!-- 成员选择 -->
+            <div class="member-section">
+                <div class="member-title">家庭成员</div>
+                <div class="member-list">
+                    <button class="member-item active" onclick="selectMember('all', this)">
+                        <span class="member-icon">👥</span>
+                        全部成员
+                        <span class="member-count" id="countAll">0</span>
+                    </button>
+                    <button class="member-item" onclick="selectMember('爸爸', this)">
+                        <span class="member-icon">👨</span>
+                        爸爸
+                        <span class="member-count" id="countDad">0</span>
+                    </button>
+                    <button class="member-item" onclick="selectMember('妈妈', this)">
+                        <span class="member-icon">👩</span>
+                        妈妈
+                        <span class="member-count" id="countMom">0</span>
+                    </button>
+                    <button class="member-item" onclick="selectMember('女儿', this)">
+                        <span class="member-icon">👧</span>
+                        女儿
+                        <span class="member-count" id="countDaughter">0</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 记录列表 -->
+            <div class="records-section">
+                <div class="section-header">
+                    <span class="section-title">最近记录</span>
+                </div>
+                <div id="recordsList"></div>
+            </div>
+        </div>
+
+        <!-- 右侧主区域 -->
+        <div class="main">
+            <div class="topbar">
+                <div class="tab active" onclick="switchTab('terminal', this)">终端</div>
+                <div class="tab" onclick="switchTab('chart', this)">统计</div>
+                <div class="topbar-actions">
+                    <button class="topbar-btn" onclick="clearTerminal()">清屏</button>
+                    <button class="topbar-btn danger" onclick="showClearAllModal()">一键清空</button>
+                    <button class="topbar-btn primary" onclick="showHelp()">帮助</button>
+                </div>
+            </div>
+
+            <div class="terminal-area" id="terminalView">
+                <div class="terminal-window">
+                    <div class="terminal-header">
+                        <span class="terminal-dot red"></span>
+                        <span class="terminal-dot yellow"></span>
+                        <span class="terminal-dot green"></span>
+                        <span class="terminal-title">记账终端 - 输入命令开始记账</span>
+                    </div>
+                    <div class="terminal-body" id="terminalBody"></div>
+                    <div class="input-area">
+                        <span class="input-prompt">$</span>
+                        <input type="text" class="input-field" id="userInput" placeholder="输入记账信息或命令..." onkeypress="if(event.key==='Enter')executeCommand()">
+                        <button class="input-submit" onclick="executeCommand()">执行</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 统计视图 -->
+            <div class="terminal-area" id="chartView" style="display:none;">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; height:100%;">
+                    <div class="chart-container" style="height:auto;">
+                        <div class="chart-header">
+                            <span class="chart-title">📊 分类支出</span>
+                        </div>
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                    <div class="chart-container" style="height:auto;">
+                        <div class="chart-header">
+                            <span class="chart-title">👤 成员消费</span>
+                        </div>
+                        <canvas id="memberChart"></canvas>
+                    </div>
+                    <div class="chart-container" style="grid-column:span 2; height:auto;">
+                        <div class="chart-header">
+                            <span class="chart-title">📈 收支趋势</span>
+                            <div class="chart-legend">
+                                <span class="legend-item"><span class="legend-dot" style="background:#3fb950"></span> 收入</span>
+                                <span class="legend-item"><span class="legend-dot" style="background:#f85149"></span> 支出</span>
+                            </div>
+                        </div>
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 记录详情弹窗 -->
+    <div class="modal-overlay" id="recordModal">
+        <div class="modal">
+            <div class="modal-title">📋 记录详情</div>
+            <div id="modalContent"></div>
+            <div class="modal-actions">
+                <button class="modal-btn" onclick="closeModal()">关闭</button>
+                <button class="modal-btn danger" onclick="deleteCurrentRecord()">删除</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 清空确认弹窗 -->
+    <div class="modal-overlay" id="clearAllModal">
+        <div class="modal">
+            <div class="modal-title">⚠️ 清空所有记录</div>
+            <div id="clearAllModalContent">
+                <div style="color:#f85149;font-size:13px;margin-bottom:12px;">
+                    此操作不可恢复！确定要清空所有账目记录吗？
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn" onclick="closeClearAllModal()">取消</button>
+                <button class="modal-btn danger" id="clearAllConfirmBtn" onclick="executeClearAll()">确认清空</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let currentMember = 'all';
+        let commandHistory = [];
+        let historyIndex = -1;
+        let currentRecord = null;
+        let categoryChart, memberChart, trendChart;
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            printWelcome();
+            loadSummary();
+            loadRecords();
+            loadMemberCounts();
+            document.getElementById('userInput').focus();
+        });
+
+        // 打印欢迎信息
+        function printWelcome() {
+            const lines = [
+                { type: 'info', text: '╔════════════════════════════════════════════════════════════╗' },
+                { type: 'info', text: '║              家庭记账本 Agent v2.0                        ║' },
+                { type: 'info', text: '║              AI 智能体 · 自然语言记账                      ║' },
+                { type: 'info', text: '╚════════════════════════════════════════════════════════════╝' },
+                { type: 'output', text: '' },
+                { type: 'success', text: '✓ 系统初始化完成' },
+                { type: 'success', text: '✓ 数据库连接成功' },
+                { type: 'success', text: '✓ 记账助手已就绪' },
+                { type: 'output', text: '' },
+                { type: 'system', text: '您好，欢迎使用咱们小家专属记账本！' },
+                { type: 'system', text: '请按照"x年x月x日，谁做什么事收入/支出多少钱"的格式来输入。' },
+                { type: 'system', text: '请告诉我你的账目需求吧~' },
+                { type: 'output', text: '' },
+                { type: 'info', text: '示例:' },
+                { type: 'output', text: '  记账 → 今天女儿买了双登山鞋499元' },
+                { type: 'output', text: '  记账 → 7月5日妈妈收到报销1000元' },
+                { type: 'output', text: '  查询 → 看下这个月家里花钱明细' },
+                { type: 'output', text: '  查询 → 这个月女儿花了多少钱？' },
+                { type: 'output', text: '  删除 → 删除女儿报旅游团的费用' },
+                { type: 'output', text: '' },
+                { type: 'divider', text: '' },
+            ];
+            lines.forEach(line => printLine(line.type, line.text));
+        }
+
+        // 打印一行
+        function printLine(type, text) {
+            const terminalBody = document.getElementById('terminalBody');
+            const div = document.createElement('div');
+            div.className = 'terminal-line';
+            if (type === 'divider') {
+                div.innerHTML = '<div class="terminal-divider"></div>';
+            } else if (type === 'prompt') {
+                div.innerHTML = `<span class="terminal-prompt">$ </span><span class="terminal-command">${text}</span>`;
+            } else {
+                div.innerHTML = `<span class="terminal-${type}">${text}</span>`;
+            }
+            terminalBody.appendChild(div);
+            terminalBody.scrollTop = terminalBody.scrollHeight;
+        }
+
+        // 执行命令
+        function executeCommand() {
+            const input = document.getElementById('userInput');
+            const command = input.value.trim();
+            if (!command) return;
+
+            commandHistory.unshift(command);
+            historyIndex = -1;
+            printLine('prompt', command);
+            input.value = '';
+
+            if (command === 'help') {
+                showHelp();
+            } else if (command === 'clear') {
+                clearTerminal();
+            } else {
+                processCommand(command);
+            }
+        }
+
+        // 处理命令
+        function processCommand(command) {
+            printLine('output', '处理中...');
+            
+            fetch('/api/chat', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({message: command})
+            })
+            .then(response => response.json())
+            .then(data => {
+                const terminalBody = document.getElementById('terminalBody');
+                terminalBody.removeChild(terminalBody.lastChild);
+                
+                const lines = data.reply.split('\n');
+                lines.forEach(line => {
+                    if (line.includes('已记录') || line.includes('已删除')) {
+                        printLine('success', '✓ ' + line);
+                    } else if (line.includes('抱歉') || line.includes('错误')) {
+                        printLine('error', '✗ ' + line);
+                    } else {
+                        printLine('output', '  ' + line);
+                    }
+                });
+                printLine('output', '');
+                
+                loadSummary();
+                loadRecords();
+                loadMemberCounts();
+            })
+            .catch(error => {
+                printLine('error', '✗ 错误: ' + error);
+            });
+        }
+
+        // 显示帮助
+        function showHelp() {
+            const helpText = [
+                { type: 'info', text: '╔════════════════════════════════════════════════════════════╗' },
+                { type: 'info', text: '║                     命令帮助                              ║' },
+                { type: 'info', text: '╚════════════════════════════════════════════════════════════╝' },
+                { type: 'output', text: '' },
+                { type: 'system', text: '开场白:' },
+                { type: 'output', text: '  您好，欢迎使用咱们小家专属记账本！' },
+                { type: 'output', text: '  请按照"x年x月x日，谁做什么事收入/支出多少钱"的格式来输入。' },
+                { type: 'output', text: '' },
+                { type: 'info', text: '记账命令:' },
+                { type: 'output', text: '  今天女儿买了双登山鞋499元' },
+                { type: 'output', text: '  7月5日妈妈收到报销1000元' },
+                { type: 'output', text: '  今天买三体花了50元' },
+                { type: 'output', text: '' },
+                { type: 'info', text: '查询命令:' },
+                { type: 'output', text: '  看下这个月家里花钱明细' },
+                { type: 'output', text: '  这个月女儿花了多少钱？' },
+                { type: 'output', text: '  我哪天买的三体' },
+                { type: 'output', text: '  我这个月买书花了多钱' },
+                { type: 'output', text: '' },
+                { type: 'info', text: '删除命令:' },
+                { type: 'output', text: '  删除女儿报旅游团的费用' },
+                { type: 'output', text: '' },
+                { type: 'info', text: '清空命令:' },
+                { type: 'output', text: '  清空所有记录' },
+                { type: 'output', text: '' },
+                { type: 'info', text: '系统命令:' },
+                { type: 'output', text: '  help    - 显示帮助' },
+                { type: 'output', text: '  clear   - 清屏' },
+                { type: 'output', text: '' },
+            ];
+            helpText.forEach(line => printLine(line.type, line.text));
+        }
+
+        // 清屏
+        function clearTerminal() {
+            document.getElementById('terminalBody').innerHTML = '';
+            printLine('success', '✓ 屏幕已清除');
+            printLine('output', '');
+        }
+
+        // 切换标签
+        function switchTab(tab, btn) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+            
+            if (tab === 'terminal') {
+                document.getElementById('terminalView').style.display = 'flex';
+                document.getElementById('chartView').style.display = 'none';
+            } else {
+                document.getElementById('terminalView').style.display = 'none';
+                document.getElementById('chartView').style.display = 'flex';
+                loadCharts();
+            }
+        }
+
+        // 选择成员
+        function selectMember(member, btn) {
+            currentMember = member;
+            document.querySelectorAll('.member-item').forEach(item => item.classList.remove('active'));
+            btn.classList.add('active');
+            loadRecords();
+            loadSummary();
+        }
+
+        // 加载汇总
+        function loadSummary() {
+            const params = currentMember !== 'all' ? `?member=${currentMember}` : '';
+            fetch(`/api/summary${params}`)
+                .then(r => r.json())
+                .then(data => {
+                    const s = data.summary;
+                    document.getElementById('income').textContent = '¥' + (s['收入'] || 0).toFixed(0);
+                    document.getElementById('expense').textContent = '¥' + (s['支出'] || 0).toFixed(0);
+                    document.getElementById('balance').textContent = '¥' + (s['净收入'] || 0).toFixed(2);
+                });
+        }
+
+        // 加载成员计数
+        function loadMemberCounts() {
+            fetch('/api/member_summary')
+                .then(r => r.json())
+                .then(data => {
+                    const summary = data.summary;
+                    let total = 0;
+                    ['爸爸', '妈妈', '女儿'].forEach(member => {
+                        const count = summary[member] ? (summary[member]['收入'] > 0 ? 1 : 0) + (summary[member]['支出'] > 0 ? 1 : 0) : 0;
+                        total += count;
+                    });
+                    // 简化：直接显示记录数
+                    fetch('/api/records?limit=100')
+                        .then(r => r.json())
+                        .then(d => {
+                            const records = d.records;
+                            document.getElementById('countAll').textContent = records.length;
+                            document.getElementById('countDad').textContent = records.filter(r => r.member === '爸爸').length;
+                            document.getElementById('countMom').textContent = records.filter(r => r.member === '妈妈').length;
+                            document.getElementById('countDaughter').textContent = records.filter(r => r.member === '女儿').length;
+                        });
+                });
+        }
+
+        // 加载记录
+        function loadRecords() {
+            const params = currentMember !== 'all' ? `?member=${currentMember}&limit=15` : '?limit=15';
+            fetch(`/api/records${params}`)
+                .then(r => r.json())
+                .then(data => {
+                    const records = data.records;
+                    const recordsList = document.getElementById('recordsList');
+                    
+                    if (records.length === 0) {
+                        recordsList.innerHTML = '<div style="text-align:center;color:#8b949e;padding:20px;font-size:12px;">暂无记录</div>';
+                        return;
+                    }
+
+                    const categoryIcons = {
+                        '买书': '📚', '吃饭': '🍜', '交通': '🚗', '购物': '🛍️',
+                        '工资': '💰', '报销': '📋', '其他': '📦'
+                    };
+
+                    let html = '';
+                    records.forEach(record => {
+                        const typeClass = record.type === '收入' ? 'income' : 'expense';
+                        const amountPrefix = record.type === '收入' ? '+' : '-';
+                        const icon = categoryIcons[record.category] || '📦';
+                        
+                        html += `
+                            <div class="record-item" onclick='showRecordDetail(${JSON.stringify(record)})'>
+                                <div class="record-icon">${icon}</div>
+                                <div class="record-info">
+                                    <div class="record-title">${record.item}</div>
+                                    <div class="record-desc">${record.date} · ${record.member} · ${record.category}</div>
+                                </div>
+                                <div class="record-amount ${typeClass}">${amountPrefix}¥${record.amount.toFixed(0)}</div>
+                            </div>
+                        `;
+                    });
+                    recordsList.innerHTML = html;
+                });
+        }
+
+        // 显示记录详情
+        function showRecordDetail(record) {
+            currentRecord = record;
+            const typeColor = record.type === '收入' ? '#3fb950' : '#f85149';
+            document.getElementById('modalContent').innerHTML = `
+                <div class="modal-row">
+                    <span class="modal-label">项目</span>
+                    <span class="modal-value">${record.item}</span>
+                </div>
+                <div class="modal-row">
+                    <span class="modal-label">金额</span>
+                    <span class="modal-value" style="color:${typeColor}">${record.type === '收入' ? '+' : '-'}¥${record.amount.toFixed(2)}</span>
+                </div>
+                <div class="modal-row">
+                    <span class="modal-label">类型</span>
+                    <span class="modal-value">${record.type}</span>
+                </div>
+                <div class="modal-row">
+                    <span class="modal-label">成员</span>
+                    <span class="modal-value">${record.member}</span>
+                </div>
+                <div class="modal-row">
+                    <span class="modal-label">类别</span>
+                    <span class="modal-value">${record.category}</span>
+                </div>
+                <div class="modal-row">
+                    <span class="modal-label">日期</span>
+                    <span class="modal-value">${record.date}</span>
+                </div>
+                ${record.note ? `<div class="modal-row">
+                    <span class="modal-label">备注</span>
+                    <span class="modal-value">${record.note}</span>
+                </div>` : ''}
+            `;
+            document.getElementById('recordModal').classList.add('show');
+        }
+
+        // 关闭弹窗
+        function closeModal() {
+            document.getElementById('recordModal').classList.remove('show');
+            currentRecord = null;
+        }
+
+        // 删除当前记录
+        function deleteCurrentRecord() {
+            if (!currentRecord) return;
+            if (!confirm(`确定删除 "${currentRecord.item}" (¥${currentRecord.amount})？`)) return;
+            
+            fetch('/api/delete_record', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({id: currentRecord.id})
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    closeModal();
+                    printLine('success', `✓ 已删除: ${currentRecord.item} ¥${currentRecord.amount}`);
+                    loadSummary();
+                    loadRecords();
+                    loadMemberCounts();
+                } else {
+                    alert('删除失败: ' + (data.error || '未知错误'));
+                }
+            });
+        }
+
+        // 显示清空确认弹窗
+        function showClearAllModal() {
+            // 先查询记录数
+            fetch('/api/summary')
+                .then(r => r.json())
+                .then(data => {
+                    const s = data.summary;
+                    const total = (s['收入笔数'] || 0) + (s['支出笔数'] || 0);
+                    document.getElementById('clearAllModalContent').innerHTML = `
+                        <div style="color:#f85149;font-size:13px;margin-bottom:12px;">
+                            此操作不可恢复！确定要清空所有账目记录吗？
+                        </div>
+                        <div style="font-size:12px;color:#8b949e;margin-bottom:4px;">
+                            当前共 <strong style="color:#f0f6fc;">${total}</strong> 条记录
+                        </div>
+                        <div style="font-size:12px;color:#8b949e;margin-bottom:16px;">
+                            收入 ¥${(s['收入'] || 0).toFixed(0)} ｜ 支出 ¥${(s['支出'] || 0).toFixed(0)}
+                        </div>
+                    `;
+                    document.getElementById('clearAllModal').classList.add('show');
+                })
+                .catch(() => {
+                    document.getElementById('clearAllModal').classList.add('show');
+                });
+        }
+
+        // 关闭清空确认弹窗
+        function closeClearAllModal() {
+            document.getElementById('clearAllModal').classList.remove('show');
+        }
+
+        // 执行清空
+        function executeClearAll() {
+            const btn = document.getElementById('clearAllConfirmBtn');
+            btn.textContent = '清空中...';
+            btn.disabled = true;
+
+            fetch('/api/clear_all', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            })
+            .then(r => r.json())
+            .then(data => {
+                closeClearAllModal();
+                if (data.success) {
+                    printLine('success', `✓ ${data.message}`);
+                    clearTerminal(); // 保留欢迎信息
+                } else {
+                    printLine('error', '✗ 清空失败: ' + (data.error || '未知错误'));
+                }
+                loadSummary();
+                loadRecords();
+                loadMemberCounts();
+            })
+            .catch(error => {
+                closeClearAllModal();
+                printLine('error', '✗ 清空失败: ' + error);
+            })
+            .finally(() => {
+                btn.textContent = '确认清空';
+                btn.disabled = false;
+            });
+        }
+
+        // 加载图表
+        function loadCharts() {
+            // 分类图表
+            fetch('/api/category_summary')
+                .then(r => r.json())
+                .then(data => {
+                    const summary = data.summary.filter(s => s.type === '支出');
+                    const labels = summary.map(s => s.category);
+                    const values = summary.map(s => s.total);
+                    
+                    if (categoryChart) categoryChart.destroy();
+                    categoryChart = new Chart(document.getElementById('categoryChart'), {
+                        type: 'doughnut',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                data: values,
+                                backgroundColor: ['#3fb950', '#f85149', '#58a6ff', '#d29922', '#8b949e', '#f778ba', '#79c0ff'],
+                                borderWidth: 0
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: { position: 'bottom', labels: { color: '#8b949e', font: { size: 11 } } }
+                            }
+                        }
+                    });
+                });
+
+            // 成员图表
+            fetch('/api/member_summary')
+                .then(r => r.json())
+                .then(data => {
+                    const summary = data.summary;
+                    const members = Object.keys(summary);
+                    const incomes = members.map(m => summary[m]['收入'] || 0);
+                    const expenses = members.map(m => summary[m]['支出'] || 0);
+                    
+                    if (memberChart) memberChart.destroy();
+                    memberChart = new Chart(document.getElementById('memberChart'), {
+                        type: 'bar',
+                        data: {
+                            labels: members,
+                            datasets: [
+                                { label: '收入', data: incomes, backgroundColor: '#3fb950', borderRadius: 4 },
+                                { label: '支出', data: expenses, backgroundColor: '#f85149', borderRadius: 4 }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: { labels: { color: '#8b949e', font: { size: 11 } } }
+                            },
+                            scales: {
+                                x: { grid: { color: '#21262d' }, ticks: { color: '#8b949e' } },
+                                y: { grid: { color: '#21262d' }, ticks: { color: '#8b949e' } }
+                            }
+                        }
+                    });
+                });
+
+            // 趋势图表
+            fetch('/api/records?limit=30')
+                .then(r => r.json())
+                .then(data => {
+                    const records = data.records;
+                    const dateMap = {};
+                    records.forEach(r => {
+                        if (!dateMap[r.date]) dateMap[r.date] = { income: 0, expense: 0 };
+                        if (r.type === '收入') dateMap[r.date].income += r.amount;
+                        else dateMap[r.date].expense += r.amount;
+                    });
+                    const dates = Object.keys(dateMap).sort();
+                    
+                    if (trendChart) trendChart.destroy();
+                    trendChart = new Chart(document.getElementById('trendChart'), {
+                        type: 'line',
+                        data: {
+                            labels: dates,
+                            datasets: [
+                                { label: '收入', data: dates.map(d => dateMap[d].income), borderColor: '#3fb950', backgroundColor: '#3fb95022', fill: true, tension: 0.4 },
+                                { label: '支出', data: dates.map(d => dateMap[d].expense), borderColor: '#f85149', backgroundColor: '#f8514922', fill: true, tension: 0.4 }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: { labels: { color: '#8b949e', font: { size: 11 } } }
+                            },
+                            scales: {
+                                x: { grid: { color: '#21262d' }, ticks: { color: '#8b949e', font: { size: 10 } } },
+                                y: { grid: { color: '#21262d' }, ticks: { color: '#8b949e' } }
+                            }
+                        }
+                    });
+                });
+        }
+
+        // 键盘快捷键
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowUp' && historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                document.getElementById('userInput').value = commandHistory[historyIndex];
+            }
+            if (e.key === 'ArrowDown' && historyIndex > -1) {
+                historyIndex--;
+                document.getElementById('userInput').value = historyIndex >= 0 ? commandHistory[historyIndex] : '';
+            }
+            if (e.ctrlKey && e.key === 'l') {
+                e.preventDefault();
+                clearTerminal();
+            }
+            if (e.key === 'Escape') {
+                closeModal();
+                closeClearAllModal();
+            }
+        });
+
+        // 点击遮罩关闭弹窗
+        document.getElementById('recordModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+        document.getElementById('clearAllModal').addEventListener('click', function(e) {
+            if (e.target === this) closeClearAllModal();
+        });
+    </script>
+</body>
+</html>
